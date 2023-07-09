@@ -11,18 +11,18 @@ app.use(express.json());
 
 console.log(process.env.NODE_ENV);
 if (process.env.NODE_ENV === 'development') {
-   app.use(morgan('dev'));
+  app.use(morgan('dev'));
 }
 
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, '/views'));
 
-// Serving statiac file
+// Serving static file
 app.use(express.static(path.join(__dirname, '/public')));
 
 app.use((req, res, next) => {
-   req.requestTime = new Date().toISOString();
-   next();
+  req.requestTime = new Date().toISOString();
+  next();
 });
 
 // 3) ROUTING
