@@ -2,6 +2,15 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: `${__dirname}/config.env` });
 
+// Bugs, not handled anywhere
+process.on('uncaughtException', (err) => {
+  console.log('UNCAUGHT EXCEPTION! Shutting down...');
+  console.log(err.name, err.message);
+
+  // Server hasn't run yet, no need to close server
+  process.exit(1);
+});
+
 const mongoose = require('mongoose');
 const app = require('./app');
 
@@ -24,16 +33,6 @@ const server = app.listen(port, () => {
 
 process.on('unhandledRejection', (err) => {
   console.log('UNHANDLED REJECTION! Shutting down...');
-  console.log(err.name, err.message);
-
-  server.close(() => {
-    process.exit(1);
-  });
-});
-
-// Bugs, not handled anywhere
-process.on('uncaughtException', (err) => {
-  console.log('UNCAUGHT EXCEPTION! Shutting down...');
   console.log(err.name, err.message);
 
   server.close(() => {
