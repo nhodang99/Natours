@@ -1,6 +1,9 @@
 const path = require('path');
 const express = require('express');
 const morgan = require('morgan');
+
+const AppError = require('./utils/appError');
+const globalErrHandler = require('./controllers/errorController');
 const toursRouter = require('./router/toursRouter');
 const usersRouter = require('./router/usersRouter');
 const viewsRouter = require('./router/viewsRoutes');
@@ -29,5 +32,12 @@ app.use((req, res, next) => {
 app.use('/api/v1/tours', toursRouter);
 app.use('/api/v1/users', usersRouter);
 app.use('/', viewsRouter);
+
+// Handle unwanted routes
+app.use('*', (req, res, next) => {
+  next(new AppError(404, `Url ${req.originalUrl} not found`));
+});
+
+app.use(globalErrHandler);
 
 module.exports = app;

@@ -12,12 +12,15 @@ router
 router.route('/tour-stats').get(controller.getTourStats);
 router.route('/monthly-plan/:year').get(controller.getMonthlyPlan);
 
-router.route('/').get(controller.getAllTours).post(controller.createTour);
+router
+  .route('/')
+  .get(controller.getAllTours)
+  .post(controller.verifyDiscount, controller.createTour);
 
 router
   .route('/:id')
   .get(controller.getTour)
-  .patch(controller.updateTour)
+  .patch(controller.verifyDiscount, controller.updateTour)
   .delete(controller.deleteTour);
 
 module.exports = router;
