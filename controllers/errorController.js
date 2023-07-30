@@ -1,20 +1,20 @@
 const AppError = require('../utils/appError');
 
-const handleCastErrorDB = (err) => {
+const handleCastErrorDB = err => {
   const message = `Invalid ${err.path}: ${err.value}`;
   return new AppError(400, message);
 };
 
-const handleDuplicateFieldErrorDB = (err) => {
-  // TODO: Would Mongoose return all duplicate field or just one?
-  const message = `Duplicate field value: ${Object.values(err.keyValue)
-    .toString()
-    .replace(',', ', ')}`;
+const handleDuplicateFieldErrorDB = err => {
+  // TODO: Would Mongoose return all duplicate fields or just one?
+  const message = `Duplicate field value: ${Object.values(err.keyValue).join(
+    ', '
+  )}`;
   return new AppError(400, message);
 };
 
-const handleValidationErrorDB = (err) => {
-  const errors = Object.values(err.errors).map((el) => el.message);
+const handleValidationErrorDB = err => {
+  const errors = Object.values(err.errors).map(el => el.message);
   const message = `Invalid input data, ${errors.join('. ')}`;
   return new AppError(400, message);
 };
@@ -37,7 +37,7 @@ const sendErrProd = (err, res) => {
     });
     // Programming or other unknown error: don't leak error details
   } else {
-    //console.error('ERROR', err);
+    console.error('ERROR', err);
 
     res.status(500).json({
       status: 'error',
@@ -53,13 +53,13 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
     sendErrDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
-    let error = { ...err };
+    let error = {};
 
-    if (error.name === 'CastError') error = handleCastErrorDB(error);
-    if (error.code === 11000) error = handleDuplicateFieldErrorDB(error);
-    //console.log(error === err); // false TODO: WHY???
-    //console.log(error.message); // undefined TODO: WHY???
-    if (err.name === 'ValidationError') error = handleValidationErrorDB(err);
+    // Errors that comes from Mongoose or Mongo that is not yet marked as operational error
+    if (err.name === 'CastError') error = handleCastErrorDB(err);
+    else if (err.code === 11000) error = handleDuplicateFieldErrorDB(err);
+    else if (err.name === 'ValidationError')
+      error = handleValidationErrorDB(err);
 
     sendErrProd(error, res);
   }

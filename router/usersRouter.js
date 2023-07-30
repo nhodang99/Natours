@@ -1,7 +1,12 @@
 const express = require('express');
 const controller = require('../controllers/userController');
+const authController = require('../controllers/authController');
 
 const router = express.Router();
+
+// Special route to sign up a new user
+router.post('/signup', authController.signup);
+router.post('/login', authController.login);
 
 router.route('/').get(controller.getAllUsers).post(controller.createUser);
 
