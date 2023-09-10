@@ -12,6 +12,10 @@ exports.aliasTopTour = (req, res, next) => {
   next();
 };
 
+/****************************************************************************************
+ * @description: verify if the price discount is lower than price
+ * @todo: remove it
+ */
 exports.verifyDiscount = catchAsync(async (req, res, next) => {
   const { priceDiscount, price } = req.body;
 
@@ -41,6 +45,9 @@ exports.verifyDiscount = catchAsync(async (req, res, next) => {
 });
 
 // API
+/****************************************************************************************
+ * @description: Get all tours' information
+ */
 exports.getAllTours = catchAsync(async (req, res, next) => {
   const features = new ApiFeatures(Tour.find(), req.query)
     .filter()
@@ -58,6 +65,9 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
   });
 });
 
+/****************************************************************************************
+ * @description: Get a specific tour's information by ID
+ */
 exports.getTour = catchAsync(async (req, res, next) => {
   const tour = await Tour.findById(req.params.id);
   // @NOTE: return null is not an error in Mongoose
@@ -74,6 +84,9 @@ exports.getTour = catchAsync(async (req, res, next) => {
   });
 });
 
+/****************************************************************************************
+ * @description: Create a new tour
+ */
 exports.createTour = catchAsync(async (req, res, next) => {
   const newTour = await Tour.create(req.body);
 
@@ -85,6 +98,9 @@ exports.createTour = catchAsync(async (req, res, next) => {
   });
 });
 
+/****************************************************************************************
+ * @description: Update an existing tour
+ */
 exports.updateTour = catchAsync(async (req, res, next) => {
   const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
@@ -103,6 +119,9 @@ exports.updateTour = catchAsync(async (req, res, next) => {
   });
 });
 
+/****************************************************************************************
+ * @description: Delete a specific tour by ID
+ */
 exports.deleteTour = catchAsync(async (req, res, next) => {
   const tour = await Tour.findByIdAndDelete(req.params.id);
   if (!tour) {

@@ -41,6 +41,11 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpired: Date,
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
 });
 
 // Set this option to true to exclude query fields that not in schema from process DB request
@@ -58,12 +63,18 @@ userSchema.pre('save', async function (next) {
 userSchema.pre('save', function (next) {
   if (!this.isModified('password') || this.isNew) return next();
 
-  // Minus 1sec to make sure token always signed after password changed
+  // Minus 1 sec to make sure token always signed after password changed
   this.passwordChangedAt = Date.now() - 1000;
   next();
 });
 
-userSchema.methods.correctPassword = async function (candidatePwd, userPwd) {
+userSchema.pre(/^find/, function (next) {
+  // this point to the current query
+  this.find({ active: { $ne: false } });
+  next();
+});
+
+userSchema.methods.isPasswordCorrect = async function (candidatePwd, userPwd) {
   return await bcrypt.compare(candidatePwd, userPwd);
 };
 

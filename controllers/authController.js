@@ -10,10 +10,35 @@ const sendEmail = require('../utils/email');
  * Sign a JWT token to a specific user id
  * @param id
  */
-const signToken = id =>
+const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRED_TIME,
   });
+
+const createAndSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+
+  const cookieOption = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+  if (process.env.NODE_ENV === 'production') cookieOption.secure = true;
+
+  res.cookie('jwt', token, cookieOption);
+
+  // Remove password from output
+  user.password = undefined;
+
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: {
+      user,
+    },
+  });
+};
 
 /**
  * Signup account
@@ -29,15 +54,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     passwordChangedAt: req.body.passwordChangedAt, // for now only
   });
 
-  const token = signToken(newUser._id);
-
-  res.status(201).json({
-    status: 'success',
-    token,
-    data: {
-      user: newUser,
-    },
-  });
+  createAndSendToken(newUser, 201, res);
 });
 
 /**
@@ -51,21 +68,17 @@ exports.login = catchAsync(async (req, res, next) => {
 
   // Check if user exist and password correct
   const user = await User.findOne({ email }).select('+password');
-  if (!user || !(await user.correctPassword(password, user.password))) {
+  if (!user || !(await user.isPasswordCorrect(password, user.password))) {
     return next(new AppError(401, 'Incorrect email or password'));
   }
 
   // If everything ok, send token to client
-  const token = signToken(user._id);
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createAndSendToken(user, 200, res);
 });
 
 /**
  * Authorize request permission before proceeding a private action
- * @summary: Verify JWT token in the incoming request
+ * @description: Verify JWT token in the incoming request
  */
 exports.protect = catchAsync(async (req, res, next) => {
   // 1) Getting token
@@ -102,7 +115,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 /**
- * @param  {...any} roles array
+ * @param  {...array} roles
  * @returns 403 error if account is not a special role
  */
 exports.restrictTo =
@@ -165,6 +178,9 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   }
 });
 
+/**
+ * @description: Reset password
+ */
 exports.resetPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on token
   const hashedToken = crypto
@@ -177,7 +193,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     passwordResetExpired: { $gt: Date.now() },
   });
 
-  // 2) If token has not expired, and there is a user, set the new password
+  // 2) If token has not expired, set the new password
   if (!user) {
     return next(new AppError(400, 'Token invalid or expired'));
   }
@@ -189,11 +205,33 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   await user.save(); // We need to valdiate
 
   // 3) Update changePasswordAt property
+  // Done in the pre-save hook
 
   // 4) Log the user in, send JWT
-  const token = jwt.signToken(user._id);
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createAndSendToken(user, 200, res);
+});
+
+/****************************************************************************************
+ * @description: update
+ */
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // 1) Get User from collection
+  const user = await User.findById(req.user.id).select('+password');
+
+  // 2) Check if POSTed password is correct by compare
+  // the currentPassword with the one stored in model
+  if (
+    !user ||
+    !(await user.isPasswordCorrect(req.body.passwordCurrent, user.password))
+  ) {
+    return next(new AppError(401, 'Your provided information is wrong'));
+  }
+
+  // 3) Update the password
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  await user.save();
+
+  // 4) Log user in, send JWT
+  createAndSendToken(user, 200, res);
 });

@@ -1,11 +1,11 @@
 const AppError = require('../utils/appError');
 
-const handleCastErrorDB = err => {
+const handleCastErrorDB = (err) => {
   const message = `Invalid ${err.path}: ${err.value}`;
   return new AppError(400, message);
 };
 
-const handleDuplicateFieldErrorDB = err => {
+const handleDuplicateFieldErrorDB = (err) => {
   // TODO: Would Mongoose return all duplicate fields or just one?
   const message = `Duplicate field value: ${Object.values(err.keyValue).join(
     ', '
@@ -13,8 +13,8 @@ const handleDuplicateFieldErrorDB = err => {
   return new AppError(400, message);
 };
 
-const handleValidationErrorDB = err => {
-  const errors = Object.values(err.errors).map(el => el.message);
+const handleValidationErrorDB = (err) => {
+  const errors = Object.values(err.errors).map((el) => el.message);
   const message = `Invalid input data, ${errors.join('. ')}`;
   return new AppError(400, message);
 };

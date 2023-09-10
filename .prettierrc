@@ -1,7 +1,6 @@
 {
   "singleQuote": true,
-  "arrowParens": "avoid",
-  "endOfLine": "crlf",
+  "endOfLine": "auto",
   "overrides": [
     {
       "files": "*.md",
