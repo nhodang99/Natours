@@ -11,6 +11,7 @@ const AppError = require('./utils/appError');
 const globalErrHandler = require('./controllers/errorController');
 const toursRouter = require('./router/toursRouter');
 const usersRouter = require('./router/usersRouter');
+const reviewsRouter = require('./router/reviewsRouter');
 const viewsRouter = require('./router/viewsRoutes');
 
 // 1) MIDDLEWARE
@@ -72,6 +73,7 @@ app.use((req, res, next) => {
 // 3) ROUTING
 app.use('/api/v1/tours', toursRouter);
 app.use('/api/v1/users', usersRouter);
+app.use('/api/v1/reviews', reviewsRouter);
 app.use('/', viewsRouter);
 
 // Handle unwanted routes

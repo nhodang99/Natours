@@ -11,16 +11,18 @@ router.post('/login', authController.login);
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 
-router.patch(
-  '/updateMyPassword',
-  authController.protect,
-  authController.updatePassword
-);
+// From this point on, all the below requests need authorization
+router.use(authController.protect);
 
-router.patch('/updateMe', authController.protect, controller.updateMe);
-router.delete('/deleteMe', authController.protect, controller.deleteMe);
+router.patch('/updateMyPassword', authController.updatePassword);
+router.get('/me', controller.getMe);
+router.patch('/updateMe', controller.updateMe);
+router.delete('/deleteMe', controller.deleteMe);
 
-router.route('/').get(controller.getAllUsers).post(controller.createUser);
+// All the below request is executed by admin only
+router.use(authController.restrictTo('admin'));
+
+router.route('/').get(controller.getAllUsers);
 
 router
   .route('/:id')

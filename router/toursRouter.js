@@ -1,30 +1,54 @@
 const express = require('express');
 const controller = require('../controllers/tourController');
 const authController = require('../controllers/authController');
+const reviewRouter = require('./reviewsRouter');
 
 const router = express.Router();
 
-// router.param('id', controller.checkId);
+// Nested route
+//POST /tour/142523545/reviews
+router.use('/:tourId/reviews', reviewRouter);
 
 router
   .route('/top-5-cheap')
   .get(controller.aliasTopTour, controller.getAllTours);
 
 router.route('/tour-stats').get(controller.getTourStats);
-router.route('/monthly-plan/:year').get(controller.getMonthlyPlan);
+router.route('/monthly-plan/:year').get(
+  authController.protect,
+  authController.restrictTo('admin', 'lead-guide', 'guide'), // execute immediately to return a middleware
+  controller.getMonthlyPlan
+);
+
+// geospatial
+router
+  .route('/tours-within/:distance/center/:latlng/unit/:unit')
+  .get(controller.getToursWithin);
+
+router.route('/distances/:latlng/unit/:unit').get(controller.getDistances);
 
 router
   .route('/')
-  .get(authController.protect, controller.getAllTours)
-  .post(controller.verifyDiscount, controller.createTour);
+  .get(controller.getAllTours)
+  .post(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'),
+    controller.verifyDiscount,
+    controller.createTour
+  );
 
 router
   .route('/:id')
   .get(controller.getTour)
-  .patch(controller.verifyDiscount, controller.updateTour)
+  .patch(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'),
+    controller.verifyDiscount,
+    controller.updateTour
+  )
   .delete(
     authController.protect,
-    authController.restrictTo('admin', 'lead-guide'), // execute immediately to return a middleware,
+    authController.restrictTo('admin', 'lead-guide'),
     controller.deleteTour
   );
 
