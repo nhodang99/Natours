@@ -171,6 +171,7 @@ tourSchema.post(/^find/, function (docs, next) {
 });
 
 // AGGREGATION MIDDLEWARE
+// Comment because geoNear need to be the first in the pipeline
 // tourSchema.pre('aggregate', function (next) {
 //   this.pipeline().unshift({
 //     $match: { secretTour: { $ne: true } },
